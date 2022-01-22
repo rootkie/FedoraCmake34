@@ -9,10 +9,13 @@ INTEGRATION_TEST=$BUILD_DIR/src/integration_testing/integration_testing
 UNIT_TEST=$BUILD_DIR/src/unit_testing/unit_testing
 
 
-fail () {
-    echo $1
-    rm -rf $BUILD_DIR
-    exit 1
+stopIfFail () {
+    if [ $? -ne 0 ]
+    then
+        echo $1
+        rm -rf $BUILD_DIR
+        exit 1
+    fi
 }
 
 # Building the files
@@ -24,38 +27,22 @@ rm -rf $BUILD_DIR/*
 cmake -S $CODE_DIR -B $BUILD_DIR
 make -C $BUILD_DIR -j4
 
-
 # if build unsuccessful, exit immediately
-if [ $? -ne 0 ]
-then
-    fail "Build failed"
-fi
+stopIfFail "Build failed"
 
 # Test the files
 echo "Unit Testing"
 $UNIT_TEST
-
-if [ $? -ne 0 ]
-then
-    fail "Unit testing Failed"
-fi
+stopIfFail "Unit testing Failed"
 
 
 echo "Integration Testing"
 $INTEGRATION_TEST
-
-if [ $? -ne 0 ]
-then
-    fail "Integration Testing Failed"
-fi
+stopIfFail "Integration Testing Failed"
 
 echo "Auto tester"
 $AUTO_TESTER $TEST_FOLDER/Sample_source.txt $TEST_FOLDER/Sample_queries.txt $TEST_FOLDER/out.xml
-
-if [ $? -ne 0 ]
-then
-    fail "Auto Testing Failed"
-fi
+stopIfFail "Auto Testing Failed"
 
 # Clean up the build file
 rm -rf $BUILD_DIR
